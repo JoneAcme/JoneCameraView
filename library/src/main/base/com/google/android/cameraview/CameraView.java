@@ -298,6 +298,13 @@ public class CameraView extends FrameLayout {
         mCameraManager.setFacing(facing);
     }
 
+    /**
+     * 前后摄像头的切换
+     */
+    public void swithCamera() {
+        setFacing(getFacing() == CameraView.FACING_FRONT ? CameraView.FACING_BACK : CameraView.FACING_FRONT);
+    }
+
     @Facing
     public int getFacing() {
         //noinspection WrongConstant

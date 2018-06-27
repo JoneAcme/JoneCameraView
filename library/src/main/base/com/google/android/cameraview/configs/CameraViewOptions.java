@@ -15,6 +15,7 @@ public class CameraViewOptions {
     private CameraViewOptions(Builder builder) {
         this.outFile = builder.outFile;
         this.isCompress = builder.isCompress;
+
         this.quality = builder.quality;
     }
 
