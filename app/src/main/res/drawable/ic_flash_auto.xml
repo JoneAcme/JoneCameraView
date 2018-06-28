@@ -11,16 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<manifest package="com.google.android.cameraview"
-          xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.CAMERA"/>
-
-    <uses-feature android:name="android.hardware.camera"/>
-    <uses-feature android:name="android.hardware.camera.autofocus"/>
-
-    <application>
-        <activity android:name=".CameraViewActivity"/>
-    </application>
-
-</manifest>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24.0"
+        android:viewportHeight="24.0">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,2v12h3v9l7,-12L9,11l4,-9L3,2zM19,2h-2l-3.2,9h1.9l0.7,-2h3.2l0.7,2h1.9L19,2zM16.85,7.65L18,4l1.15,3.65h-2.3z"/>
+</vector>

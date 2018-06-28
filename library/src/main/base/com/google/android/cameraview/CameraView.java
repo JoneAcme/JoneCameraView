@@ -32,7 +32,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.google.android.cameraview.callback.CameraControlListener;
+import com.google.android.cameraview.callback.CameraManagerCallBack;
+import com.google.android.cameraview.callback.CameraPictureListener;
+import com.google.android.cameraview.callback.CameraVideoRecorderListener;
 import com.google.android.cameraview.configs.CameraConfig;
+import com.google.android.cameraview.configs.CameraViewOptions;
+import com.google.android.cameraview.helper.CameraHelper;
 import com.google.android.cameraview.logs.CameraLog;
 import com.google.android.cameraview.model.AspectRatio;
 
@@ -44,12 +50,13 @@ import java.util.Set;
 /**
  * 自定义的CameraView
  */
-public class CameraView extends FrameLayout {
+public class CameraView extends FrameLayout implements CameraManagerCallBack {
 
     private static final String TAG = CameraView.class.getSimpleName();
 
     public static final int FACING_BACK = CameraConfig.FACING_BACK;
     public static final int FACING_FRONT = CameraConfig.FACING_FRONT;
+
 
     @IntDef({FACING_BACK, FACING_FRONT})
     @Retention(RetentionPolicy.SOURCE)
@@ -67,11 +74,16 @@ public class CameraView extends FrameLayout {
     public @interface Flash {
     }
 
+    private boolean mRequestLayoutOnOpen;
     private boolean mAdjustViewBounds;
     private CameraPreview mPreviewImpl;
     private CameraManager mCameraManager;
-    private final CallbackBridge mCallbackBridge;
     private final DisplayOrientationDetector mDisplayOrientationDetector;
+
+    private CameraControlListener mControlListener;
+
+    private CameraVideoRecorderListener mRecorderListener;
+
 
     public CameraView(Context context) {
         this(context, null);
@@ -85,15 +97,13 @@ public class CameraView extends FrameLayout {
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         if (isInEditMode()) {
-            mCallbackBridge = null;
             mDisplayOrientationDetector = null;
             return;
         }
 
         // Internal setup
         mPreviewImpl = createPreviewImpl(context);
-        mCallbackBridge = new CallbackBridge();
-        mCameraManager = createCameraViewImpl(context, mPreviewImpl, mCallbackBridge);
+        mCameraManager = createCameraViewImpl(context, mPreviewImpl);
 
         // Attributes R.style.Widget_CameraView中是参数默认值
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView, defStyleAttr, R.style.Widget_CameraView);
@@ -106,7 +116,7 @@ public class CameraView extends FrameLayout {
             setAspectRatio(CameraConfig.DEFAULT_ASPECT_RATIO);//默认宽高比是16:9
         }
         setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));//默认自动对焦模式
-        setFlash(a.getInt(R.styleable.CameraView_flash, CameraConfig.FLASH_OFF));//默认关闭闪光灯
+        setFlash(a.getInt(R.styleable.CameraView_flash, CameraConfig.FLASH_AUTO));//默认关闭闪光灯
         a.recycle();
 
         // Display orientation detector
@@ -148,24 +158,24 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    private CameraManager createCameraViewImpl(Context context, CameraPreview preview, CallbackBridge callbackBridge) {
-//        return new Camera2Manager(callbackBridge, preview, context);
+    private CameraManager createCameraViewImpl(Context context, CameraPreview preview) {
+        return new Camera1Manager(this, preview, context);
 
-        if (CameraHelper.getInstance(getContext()).shouldUseCamera1()) {//只使用Camera1的方案
-            CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager (for previous experience)", Build.VERSION.SDK_INT);
-            return new Camera1Manager(callbackBridge, preview);
-        } else {//根据版本可能使用Camera2的方案
-            if (Build.VERSION.SDK_INT < 21) {
-                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager", Build.VERSION.SDK_INT);
-                return new Camera1Manager(callbackBridge, preview);
-            } else if (Build.VERSION.SDK_INT < 23) {
-                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Manager", Build.VERSION.SDK_INT);
-                return new Camera2Manager(callbackBridge, preview, context);
-            } else {
-                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Api23", Build.VERSION.SDK_INT);
-                return new Camera2Api23(callbackBridge, preview, context);
-            }
-        }
+//        if (CameraHelper.getInstance(getContext()).shouldUseCamera1()) {//只使用Camera1的方案
+//            CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager (for previous experience)", Build.VERSION.SDK_INT);
+//            return new Camera1Manager(this, preview, context);
+//        } else {//根据版本可能使用Camera2的方案
+//            if (Build.VERSION.SDK_INT < 21) {
+//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager", Build.VERSION.SDK_INT);
+//                return new Camera1Manager(this, preview, context);
+//            } else if (Build.VERSION.SDK_INT < 23) {
+//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Manager", Build.VERSION.SDK_INT);
+//                return new Camera2Manager(this, preview, context);
+//            } else {
+//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Api23", Build.VERSION.SDK_INT);
+//                return new Camera2Api23(this, preview, context);
+//            }
+//        }
     }
 
     @Override
@@ -197,7 +207,7 @@ public class CameraView extends FrameLayout {
         // Handle android:adjustViewBounds
         if (mAdjustViewBounds) {
             if (!isCameraOpened()) {//此时相机还没有打开，这里设置一个标志位，等相机打开的时候做一次requestLayout
-                mCallbackBridge.reserveRequestLayoutOnOpen();
+                reserveRequestLayoutOnOpen();
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
                 return;
             }
@@ -248,7 +258,7 @@ public class CameraView extends FrameLayout {
     /**
      * 打开摄像头 (这里做了个优化点，如果上一次启动Camera2失败但是启动Camera1成功的话，那么以后就直接使用Camera1，不需要再进行切换)
      */
-    public boolean start() {
+    public boolean openCamera() {
         CameraLog.i(TAG, "startCamera camera begin");
         boolean isSuccess = mCameraManager.startCamera();
         if (isSuccess) {
@@ -262,7 +272,7 @@ public class CameraView extends FrameLayout {
             if (mPreviewImpl == null || mPreviewImpl.getView() == null) {//可以避免重复创建，只是替换CameraView，不用替换PreviewImpl的实现，预览组件的大小也维持之前的设置 (aspect ratio没变)
                 mPreviewImpl = createPreviewImpl(getContext());
             }
-            mCameraManager = new Camera1Manager(mCallbackBridge, mPreviewImpl);
+            mCameraManager = new Camera1Manager(this, mPreviewImpl, getContext());
             onRestoreInstanceState(state);
             isSuccess = mCameraManager.startCamera();
             if (isSuccess) {
@@ -278,9 +288,15 @@ public class CameraView extends FrameLayout {
     /**
      * 关闭摄像头
      */
-    public void stop() {
+    public void stopCamera() {
         CameraLog.i(TAG, "stopCamera camera");
         mCameraManager.stopCamera();
+    }
+
+
+    public void releaseCamera() {
+        stopCamera();
+        mCameraManager.releaseCameraManager();
     }
 
     /**
@@ -363,83 +379,6 @@ public class CameraView extends FrameLayout {
         mCameraManager.takePicture();
     }
 
-    /**
-     * 监听CameraView的主要事件，事件发生时再dispatch到其他的监听器上 (这个Callback是用于创建CameraViewImpl时所需要传入的Callback)
-     */
-    private class CallbackBridge implements CameraManager.Callback {
-
-        private final ArrayList<Callback> mCallbacks = new ArrayList<>();
-
-        private boolean mRequestLayoutOnOpen;
-
-        CallbackBridge() {
-        }
-
-        public void add(Callback callback) {
-            mCallbacks.add(callback);
-        }
-
-        public void remove(Callback callback) {
-            mCallbacks.remove(callback);
-        }
-
-        @Override
-        public void onCameraOpened() {
-            if (mRequestLayoutOnOpen) {
-                mRequestLayoutOnOpen = false;
-                requestLayout();
-            }
-            for (Callback callback : mCallbacks) {
-                callback.onCameraOpened(CameraView.this);
-            }
-        }
-
-        @Override
-        public void onCameraClosed() {
-            for (Callback callback : mCallbacks) {
-                callback.onCameraClosed(CameraView.this);
-            }
-        }
-
-        @Override
-        public void onPictureTaken(byte[] data) {
-            for (Callback callback : mCallbacks) {
-                callback.onPictureTaken(CameraView.this, data);
-            }
-        }
-
-        public void reserveRequestLayoutOnOpen() {
-            mRequestLayoutOnOpen = true;
-        }
-    }
-
-    public void addCallback(@NonNull Callback callback) {
-        mCallbackBridge.add(callback);
-    }
-
-    public void removeCallback(@NonNull Callback callback) {
-        mCallbackBridge.remove(callback);
-    }
-
-    /**
-     * 这个Callback是给外面使用CameraView的地方用于监听CameraView发生变化事件的回调
-     */
-    @SuppressWarnings("UnusedParameters")
-    public abstract static class Callback {
-
-        public void onCameraOpened(CameraView cameraView) {
-        }
-
-        public void onCameraClosed(CameraView cameraView) {
-        }
-
-        public void onCameraError(CameraView cameraView) {//暂时还没有想好对外抛出哪些相机问题
-        }
-
-        //data is JPEG data
-        public void onPictureTaken(CameraView cameraView, byte[] data) {
-        }
-    }
 
     /**
      * CameraView的保存状态数据(SavedState)
@@ -518,6 +457,43 @@ public class CameraView extends FrameLayout {
     }
 
 
+    public void reserveRequestLayoutOnOpen() {
+        mRequestLayoutOnOpen = true;
+    }
+
+    @Override
+    public void onCameraOpened() {
+        if (mRequestLayoutOnOpen) {
+            mRequestLayoutOnOpen = false;
+            requestLayout();
+        }
+        if (null != mControlListener) mControlListener.onCameraOpened(this);
+    }
+
+    @Override
+    public void onCameraClosed() {
+        if (null != mControlListener) mControlListener.onCameraClosed(this);
+    }
+
+
+    @Override
+    public void onStartVideoRecorder() {
+        if (null != mRecorderListener) mRecorderListener.onStartVideoRecorder();
+    }
+
+    @Override
+    public void onCompleteVideoRecorder() {
+        if (null != mRecorderListener) mRecorderListener.onCompleteVideoRecorder();
+    }
+
+    public void setControlListener(CameraControlListener mControlListener) {
+        this.mControlListener = mControlListener;
+    }
+
+    public void setRecorderListener(CameraVideoRecorderListener mRecorderListener) {
+        this.mRecorderListener = mRecorderListener;
+    }
+
     public void startVideoRecorder() {
         mCameraManager.startVideoRecorder();
     }
@@ -526,4 +502,13 @@ public class CameraView extends FrameLayout {
         mCameraManager.stopVideoRecorder();
     }
 
+
+    /**
+     * 拍照，录像配置
+     *
+     * @param mCameraOption
+     */
+    public void setmCameraOption(CameraViewOptions mCameraOption) {
+        mCameraManager.setCameraOption(mCameraOption);
+    }
 }

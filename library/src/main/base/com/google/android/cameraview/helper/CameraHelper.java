@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.cameraview;
+package com.google.android.cameraview.helper;
 
 import android.content.Context;
 import android.content.SharedPreferences;

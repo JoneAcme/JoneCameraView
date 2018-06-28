@@ -1,26 +1,9 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.google.android.cameraview;
 
-import android.hardware.Camera;
+import android.content.Context;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -28,16 +11,17 @@ import android.os.Process;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.cameraview.callback.CameraManagerCallBack;
+import com.google.android.cameraview.compress.CompressUtils;
 import com.google.android.cameraview.configs.CameraConfig;
-import com.google.android.cameraview.model.AspectRatio;
+import com.google.android.cameraview.configs.CameraViewOptions;
 import com.google.android.cameraview.model.Size;
 
-import java.util.Set;
 
 /**
  * 不同方式实现CameraView的抽象基类
  */
-abstract class CameraManager implements ManagerInterface{
+abstract class CameraManager implements ManagerInterface {
 
     private final static String TAG = "CameraManager";
 
@@ -45,23 +29,26 @@ abstract class CameraManager implements ManagerInterface{
     public static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
     public static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
 
-    protected final Callback mCallback;
+    protected final CameraManagerCallBack mCallback;
     protected final CameraPreview mPreview;
 
     protected MediaRecorder mMediaRecorder;
     protected CamcorderProfile mCamcorderProfile;
     protected Size mVideoSize;
 
+    protected CameraViewOptions mCameraOption;
+    protected Context mContext;
     HandlerThread mBackgroundThread;
     Handler mBackgroundHandler;
     Handler mUiHandler = new Handler(Looper.getMainLooper());
 
+    String videoPath;
     boolean mIsVideoRecording = false;
 
-    String videoOutPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + System.currentTimeMillis() + ".mp4";
-//context.getCacheDir().getAbsolutePath()
 
-    CameraManager(Callback callback, CameraPreview preview) {
+    CameraManager(CameraManagerCallBack callback, CameraPreview preview, Context context) {
+        this.mCameraOption = new CameraViewOptions.Builder(context).create();
+        mContext = context;
         mCallback = callback;
         mPreview = preview;
         startBackgroundThread();
@@ -125,24 +112,29 @@ abstract class CameraManager implements ManagerInterface{
         }
     }
 
+
+    @Override
+    public void setCameraOption(CameraViewOptions mCameraOption) {
+        this.mCameraOption = mCameraOption;
+    }
+
+    @Override
     public void releaseCameraManager() {
-//        this.mContext = null;
+        //        this.mContext = null;
         stopBackgroundThread();
     }
 
 
-
-    /**
-     * 摄像头相关回调 (camera session callbacks)
-     */
-    interface Callback {
-
-        void onCameraOpened();
-
-        void onCameraClosed();
-
-        void onPictureTaken(byte[] data);
+    @Override
+    public void compressVideo(String localPath,CameraViewOptions mCameraOption) {
+        CompressUtils.ansyVideoCompress(mContext,localPath, mCameraOption);
     }
+
+    @Override
+    public void compressImage(byte[] data, CameraViewOptions mCameraOption) {
+        CompressUtils.ansyPictrueCompress(mContext, data, mCameraOption);
+    }
+
 
 }
 

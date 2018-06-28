@@ -40,8 +40,11 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 
+import com.google.android.cameraview.callback.CameraManagerCallBack;
 import com.google.android.cameraview.configs.CameraConfig;
-import com.google.android.cameraview.configs.CameraUtils;
+import com.google.android.cameraview.configs.CameraViewOptions;
+import com.google.android.cameraview.helper.CameraUtils;
+import com.google.android.cameraview.helper.FileUtils;
 import com.google.android.cameraview.logs.CameraLog;
 import com.google.android.cameraview.model.AspectRatio;
 import com.google.android.cameraview.model.Size;
@@ -91,8 +94,8 @@ class Camera2Manager extends CameraManager {
 
     private ImageReader mImageReader;
 
-    public Camera2Manager(Callback callback, CameraPreview preview, Context context) {
-        super(callback, preview);
+    public Camera2Manager(CameraManagerCallBack callback, CameraPreview preview, Context context) {
+        super(callback, preview,context);
         mCameraManager = (android.hardware.camera2.CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         if (mPreview != null) {
             mPreview.setCallback(new CameraPreview.Callback() {
@@ -955,7 +958,9 @@ class Camera2Manager extends CameraManager {
                     byte[] data = new byte[buffer.remaining()];
                     buffer.get(data);
 
-                    mCallback.onPictureTaken(data);
+//                    mCallback.onPictureTaken(data);
+
+                    compressImage(data,mCameraOption);
                 }
             }
         }
@@ -970,19 +975,38 @@ class Camera2Manager extends CameraManager {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 
-            mMediaRecorder.setOutputFormat(mCamcorderProfile.fileFormat);
-            mMediaRecorder.setVideoFrameRate(mCamcorderProfile.videoFrameRate);
-            mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
-            mMediaRecorder.setVideoEncodingBitRate(mCamcorderProfile.videoBitRate);
+            mCamcorderProfile = CameraUtils.getCamcorderProfile(CameraConfig.MEDIA_QUALITY_MEDIUM, mCameraId);
+
+            //MediaRecorder.OutputFormat.MPEG_4    实现开始静音
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+//            mMediaRecorder.setOutputFormat(mCamcorderProfile.fileFormat);
+            //设置视频帧率，可省略  25
+//            mMediaRecorder.setVideoFrameRate(mCamcorderProfile.videoFrameRate);
+            mMediaRecorder.setVideoFrameRate(mCameraOption.getVideoFrameRate());
+//            mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+            mMediaRecorder.setVideoSize(mCameraOption.getVideoWidth(), mCameraOption.getVideoHeight());
+            //提高帧频率，录像模糊，花屏，绿屏可写上调试 10 * 1024 * 1024
+//            mMediaRecorder.setVideoEncodingBitRate(mCamcorderProfile.videoBitRate);
+            mMediaRecorder.setVideoEncodingBitRate(mCameraOption.getVideoEncodingBitRate());
+            //格式  MediaRecorder.VideoEncoder.H264
             mMediaRecorder.setVideoEncoder(mCamcorderProfile.videoCodec);
 
+            //设置所录制的声音的编码位率。
             mMediaRecorder.setAudioEncodingBitRate(mCamcorderProfile.audioBitRate);
+            //设置录制的音频通道数。
             mMediaRecorder.setAudioChannels(mCamcorderProfile.audioChannels);
+            //设置所录制的声音的采样率。
             mMediaRecorder.setAudioSamplingRate(mCamcorderProfile.audioSampleRate);
+            //设置所录制的声音的编码格式。    MediaRecorder.AudioEncoder.AMR_NB
             mMediaRecorder.setAudioEncoder(mCamcorderProfile.audioCodec);
 
-            mMediaRecorder.setOrientationHint(mDisplayOrientation);
+            //设置输出的视频播放的方向提示
+            mMediaRecorder.setOrientationHint(mFacing == CameraConfig.FACING_FRONT ?(mDisplayOrientation+180)%360:mDisplayOrientation);
             Log.e(TAG, "setOrientationHint : " + mDisplayOrientation);
+            videoPath =  FileUtils.getVideoLocalPath(mContext);
+            mMediaRecorder.setOutputFile(videoPath);
+
+            mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
             mMediaRecorder.prepare();
             return true;
         } catch (IllegalStateException error) {
@@ -1035,6 +1059,7 @@ class Camera2Manager extends CameraManager {
 
                                 mIsVideoRecording = true;
 
+                                mCallback.onStartVideoRecorder();
 //                                mUiiHandler.post(new Runnable() {
 //                                    @Override
 //                                    public void run() {
@@ -1083,9 +1108,9 @@ class Camera2Manager extends CameraManager {
             mIsVideoRecording = false;
             releaseVideoRecorder();
 
-//            if (mCameraVideoListener != null) {
-//                mCameraVideoListener.onVideoRecordStopped(mOutputPath, callback);
-//            }
+            mCallback.onCompleteVideoRecorder();
+            Log.d(TAG, "mMediaRecorder stopCamera!");
+            compressVideo(videoPath,mCameraOption);
         }
     }
 }

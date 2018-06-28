@@ -2,6 +2,7 @@ package com.google.android.cameraview;
 
 import android.view.View;
 
+import com.google.android.cameraview.configs.CameraViewOptions;
 import com.google.android.cameraview.model.AspectRatio;
 
 import java.util.Set;
@@ -13,45 +14,41 @@ import java.util.Set;
  */
 
 
-interface ManagerInterface {
+public interface ManagerInterface {
 
+    boolean startCamera();
 
+    void stopCamera();
 
-     boolean startCamera();
+    boolean isCameraOpened();
 
-     void stopCamera();
+    void setFacing(int facing);
 
+    int getFacing();
 
+    Set<AspectRatio> getSupportedAspectRatios();
 
-     boolean isCameraOpened();
+    boolean setAspectRatio(AspectRatio ratio);
 
-     void setFacing(int facing);
+    AspectRatio getAspectRatio();
 
-     int getFacing();
+    void setAutoFocus(boolean autoFocus);
 
-     Set<AspectRatio> getSupportedAspectRatios();
+    boolean getAutoFocus();
 
-     boolean setAspectRatio(AspectRatio ratio);
+    void setFlash(int flash);
 
-     AspectRatio getAspectRatio();
+    int getFlash();
 
-     void setAutoFocus(boolean autoFocus);
+    void takePicture();
 
-     boolean getAutoFocus();
+    void setDisplayOrientation(int displayOrientation);
 
-     void setFlash(int flash);
+    boolean prepareVideoRecorder();
 
-     int getFlash();
+    void startVideoRecorder();
 
-     void takePicture();
-
-     void setDisplayOrientation(int displayOrientation);
-
-     boolean prepareVideoRecorder();
-
-     void startVideoRecorder();
-
-     void stopVideoRecorder();
+    void stopVideoRecorder();
 
     void releaseVideoRecorder();
 
@@ -63,4 +60,11 @@ interface ManagerInterface {
 
     View getView();
 
+    void releaseCameraManager();
+
+    void setCameraOption(CameraViewOptions mCameraOption);
+
+    void compressVideo(String localPath,CameraViewOptions mCameraOption);
+
+    void compressImage( byte[] data,CameraViewOptions mCameraOption);
 }

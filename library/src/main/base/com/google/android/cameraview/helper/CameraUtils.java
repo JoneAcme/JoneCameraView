@@ -1,4 +1,4 @@
-package com.google.android.cameraview.configs;
+package com.google.android.cameraview.helper;
 
 import android.annotation.TargetApi;
 import android.content.Context;

@@ -21,6 +21,8 @@ import android.content.Context;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.params.StreamConfigurationMap;
 
+import com.google.android.cameraview.callback.CameraManagerCallBack;
+import com.google.android.cameraview.configs.CameraViewOptions;
 import com.google.android.cameraview.model.Size;
 
 /**
@@ -29,7 +31,7 @@ import com.google.android.cameraview.model.Size;
 @TargetApi(23)
 class Camera2Api23 extends Camera2Manager {
 
-    Camera2Api23(Callback callback, CameraPreview preview, Context context) {
+    Camera2Api23(CameraManagerCallBack callback, CameraPreview preview, Context context) {
         super(callback, preview, context);
     }
 

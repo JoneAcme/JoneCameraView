@@ -18,6 +18,7 @@ package com.google.android.cameraview;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -31,8 +32,11 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
 
+import com.google.android.cameraview.callback.CameraManagerCallBack;
 import com.google.android.cameraview.configs.CameraConfig;
-import com.google.android.cameraview.configs.CameraUtils;
+import com.google.android.cameraview.configs.CameraViewOptions;
+import com.google.android.cameraview.helper.CameraUtils;
+import com.google.android.cameraview.helper.FileUtils;
 import com.google.android.cameraview.logs.CameraLog;
 import com.google.android.cameraview.model.AspectRatio;
 import com.google.android.cameraview.model.Size;
@@ -86,8 +90,8 @@ class Camera1Manager extends CameraManager {
     private Handler mHandler = new Handler();
     private Camera.AutoFocusCallback mAutofocusCallback;//这个貌似并没有起到作用，后期考虑删除
 
-    public Camera1Manager(Callback callback, CameraPreview preview) {
-        super(callback, preview);
+    public Camera1Manager(CameraManagerCallBack callback, CameraPreview preview, Context context) {
+        super(callback, preview, context);
         if (mPreview != null) {
             mPreview.setCallback(new CameraPreview.Callback() {
                 @Override
@@ -119,7 +123,7 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public  void stopCamera() {
+    public void stopCamera() {
         if (mCamera != null) {
             mCamera.stopPreview();
         }
@@ -162,7 +166,7 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public   void setFacing(int facing) {
+    public void setFacing(int facing) {
         if (mFacing == facing) {
             return;
         }
@@ -174,12 +178,12 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public  int getFacing() {
+    public int getFacing() {
         return mFacing;
     }
 
     @Override
-    public  Set<AspectRatio> getSupportedAspectRatios() {
+    public Set<AspectRatio> getSupportedAspectRatios() {
         //mPreviewSizes和mPictureSizes都有各自支持的比例，这里是求出mPreviewSizes中那些在mPictureSizes中也存在的比例列表 => javayhu 后来我在adjustCameraParameters中也做了这个操作
         SizeMap idealAspectRatios = mPreviewSizes;
         List<AspectRatio> ratiosToDelete = new ArrayList<>();
@@ -196,7 +200,7 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public  boolean setAspectRatio(AspectRatio ratio) {
+    public boolean setAspectRatio(AspectRatio ratio) {
         if (mAspectRatio == null || !isCameraOpened()) {
             CameraLog.i(TAG, "setAspectRatio, mAspectRatio is null? %s, camera open? %s", mAspectRatio == null, isCameraOpened());
             mAspectRatio = ratio;// Handle this later when camera is opened
@@ -222,7 +226,7 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public  void setAutoFocus(boolean autoFocus) {
+    public void setAutoFocus(boolean autoFocus) {
         if (mAutoFocus == autoFocus) {
             return;
         }
@@ -251,12 +255,12 @@ class Camera1Manager extends CameraManager {
     }
 
     @Override
-    public  int getFlash() {
+    public int getFlash() {
         return mFlash;
     }
 
     @Override
-    public  void takePicture() {
+    public void takePicture() {
         if (!isCameraOpened()) {
             //throw new IllegalStateException("Camera is not ready. Call startCamera() before takePicture().");
             CameraLog.i(TAG, "Camera is not ready, call startCamera() before takePicture()");
@@ -314,7 +318,8 @@ class Camera1Manager extends CameraManager {
                     CameraLog.i(TAG, "takePictureInternal, onPictureTaken");
                     isPictureCaptureInProgress.set(false);
 
-                    mCallback.onPictureTaken(data);
+//                    mCallback.onPictureTaken(data);
+                    compressImage(data, mCameraOption);
 
                     camera.cancelAutoFocus();
                     camera.startPreview();
@@ -331,14 +336,14 @@ class Camera1Manager extends CameraManager {
         }
         mDisplayOrientation = displayOrientation;
         if (isCameraOpened()) {
-            int rotation = CameraUtils.calcCameraRotation(mCameraInfo,displayOrientation);
+            int rotation = CameraUtils.calcCameraRotation(mCameraInfo, displayOrientation);
             mCameraParameters.setRotation(rotation);
             mCamera.setParameters(mCameraParameters);
             final boolean needsToStopPreview = mShowingPreview && Build.VERSION.SDK_INT < 14;
             if (needsToStopPreview) {
                 mCamera.stopPreview();
             }
-            int orientation = CameraUtils.calcDisplayOrientation(mCameraInfo,displayOrientation);
+            int orientation = CameraUtils.calcDisplayOrientation(mCameraInfo, displayOrientation);
             mCamera.setDisplayOrientation(orientation);
             if (needsToStopPreview) {
                 mCamera.startPreview();
@@ -393,7 +398,8 @@ class Camera1Manager extends CameraManager {
         }
 
         adjustCameraParameters();
-        mCamera.setDisplayOrientation(CameraUtils.calcDisplayOrientation(mCameraInfo,mDisplayOrientation));
+        mCamera.setDisplayOrientation(CameraUtils.calcDisplayOrientation(mCameraInfo, mDisplayOrientation));
+        Log.e(TAG, "setDisplayOrientation:" + CameraUtils.calcDisplayOrientation(mCameraInfo, mDisplayOrientation));
 
         mCallback.onCameraOpened();
     }
@@ -433,7 +439,7 @@ class Camera1Manager extends CameraManager {
 
         mCameraParameters.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
         mCameraParameters.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
-        mCameraParameters.setRotation(CameraUtils.calcCameraRotation(mCameraInfo,mDisplayOrientation));
+        mCameraParameters.setRotation(CameraUtils.calcCameraRotation(mCameraInfo, mDisplayOrientation));
         setAutoFocusInternal(mAutoFocus);
         setFlashInternal(mFlash);
         mCamera.setParameters(mCameraParameters);
@@ -536,9 +542,6 @@ class Camera1Manager extends CameraManager {
             mCallback.onCameraClosed();
         }
     }
-
-
-
 
 
     /**
@@ -752,17 +755,22 @@ class Camera1Manager extends CameraManager {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
 
-            mCamcorderProfile = CameraUtils.getCamcorderProfile(CameraConfig.MEDIA_QUALITY_LOW, mCameraId);
+            mCamcorderProfile = CameraUtils.getCamcorderProfile(CameraConfig.MEDIA_QUALITY_MEDIUM, mCameraId);
 
-            //MediaRecorder.OutputFormat.MPEG_4
-            mMediaRecorder.setOutputFormat(mCamcorderProfile.fileFormat);
+            //MediaRecorder.OutputFormat.MPEG_4    实现开始静音
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+//            mMediaRecorder.setOutputFormat(mCamcorderProfile.fileFormat);
             //设置视频帧率，可省略  25
-            mMediaRecorder.setVideoFrameRate(mCamcorderProfile.videoFrameRate);
-            mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+//            mMediaRecorder.setVideoFrameRate(mCamcorderProfile.videoFrameRate);
+            mMediaRecorder.setVideoFrameRate(mCameraOption.getVideoFrameRate());
+//            mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+            mMediaRecorder.setVideoSize(mCameraOption.getVideoWidth(), mCameraOption.getVideoHeight());
             //提高帧频率，录像模糊，花屏，绿屏可写上调试 10 * 1024 * 1024
-            mMediaRecorder.setVideoEncodingBitRate(mCamcorderProfile.videoBitRate);
+//            mMediaRecorder.setVideoEncodingBitRate(mCamcorderProfile.videoBitRate);
+            mMediaRecorder.setVideoEncodingBitRate(mCameraOption.getVideoEncodingBitRate());
             //格式  MediaRecorder.VideoEncoder.H264
             mMediaRecorder.setVideoEncoder(mCamcorderProfile.videoCodec);
+
 
             //设置所录制的声音的编码位率。
             mMediaRecorder.setAudioEncodingBitRate(mCamcorderProfile.audioBitRate);
@@ -773,11 +781,11 @@ class Camera1Manager extends CameraManager {
             //设置所录制的声音的编码格式。    MediaRecorder.AudioEncoder.AMR_NB
             mMediaRecorder.setAudioEncoder(mCamcorderProfile.audioCodec);
 
-            mMediaRecorder.setOutputFile(videoOutPath);
-
+            videoPath =  FileUtils.getVideoLocalPath(mContext);
+            mMediaRecorder.setOutputFile(videoPath);
+            int oritation = CameraUtils.calcDisplayOrientation(mCameraInfo, mDisplayOrientation);
             //设置输出的视频播放的方向提示
-            mMediaRecorder.setOrientationHint(CameraUtils.calcDisplayOrientation(mCameraInfo,mDisplayOrientation));
-            Log.e(TAG, "setOrientationHint : " + CameraUtils.calcDisplayOrientation(mCameraInfo,mDisplayOrientation));
+            mMediaRecorder.setOrientationHint(mFacing == CameraConfig.FACING_FRONT ?(oritation+180)%360:oritation);
             mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
 
             mMediaRecorder.prepare();
@@ -803,6 +811,7 @@ class Camera1Manager extends CameraManager {
                     mMediaRecorder.start();
                     Log.e(TAG, "mMediaRecorder startCamera!");
                     mIsVideoRecording = true;
+                    mCallback.onStartVideoRecorder();
                 }
             }
         });
@@ -822,14 +831,17 @@ class Camera1Manager extends CameraManager {
 
                     mIsVideoRecording = false;
                     releaseVideoRecorder();
-                    Log.e(TAG, "mMediaRecorder stopCamera!");
+
+                    mCallback.onCompleteVideoRecorder();
+                    Log.d(TAG, "mMediaRecorder stopCamera!");
+                    compressVideo(videoPath,mCameraOption);
                 }
             });
         }
     }
 
     @Override
-    public  void releaseVideoRecorder() {
+    public void releaseVideoRecorder() {
         super.releaseVideoRecorder();
         try {
             // lock camera for later use
