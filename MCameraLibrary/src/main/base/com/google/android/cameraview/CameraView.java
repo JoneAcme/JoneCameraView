@@ -508,7 +508,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
      *
      * @param mCameraOption
      */
-    public void setmCameraOption(CameraViewOptions mCameraOption) {
+    public void setCameraOption(CameraViewOptions mCameraOption) {
         mCameraManager.setCameraOption(mCameraOption);
     }
 }

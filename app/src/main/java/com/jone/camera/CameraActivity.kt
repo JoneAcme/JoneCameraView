@@ -1,14 +1,11 @@
 package com.jone.camera
 
 import android.Manifest
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
-import android.os.Build
 import com.google.android.cameraview.CameraView
 import com.google.android.cameraview.callback.CameraControlListener
 import com.google.android.cameraview.callback.CameraVideoRecorderListener
@@ -54,7 +51,7 @@ class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRe
         mCameraView.setRecorderListener(this)
 
         val viewOptions = CameraViewOptions.Builder(this).setCompressListener(this).create()
-        mCameraView.setmCameraOption(viewOptions)
+        mCameraView.setCameraOption(viewOptions)
 
     }
 
