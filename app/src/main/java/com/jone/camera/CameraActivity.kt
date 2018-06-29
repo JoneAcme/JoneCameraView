@@ -11,25 +11,13 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.os.Build
 import com.google.android.cameraview.CameraView
 import com.google.android.cameraview.callback.CameraControlListener
-import com.google.android.cameraview.callback.CameraPictureListener
 import com.google.android.cameraview.callback.CameraVideoRecorderListener
+import com.google.android.cameraview.compress.inter.CompressListener
+import com.google.android.cameraview.configs.CameraViewOptions
 import com.tbruyelle.rxpermissions2.RxPermissions
 
-fun Activity.hasPermission(permission: String, requestCode: Int): Boolean {
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val hasPermission = checkSelfPermission(permission)
-        if (hasPermission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(permission), requestCode)
-            return false
-        } else {
-            return true
-        }
-    }
-    return true
-}
-
-class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRecorderListener {
+class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRecorderListener, CompressListener {
 
 
     private val CODE_REQUEST_CAMERA = 100
@@ -64,6 +52,10 @@ class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRe
 //        mCameraView.facing = (CameraView.FACING_FRONT)
         mCameraView.setControlListener(this)
         mCameraView.setRecorderListener(this)
+
+        val viewOptions = CameraViewOptions.Builder(this).setCompressListener(this).create()
+        mCameraView.setmCameraOption(viewOptions)
+
     }
 
     override fun onResume() {
@@ -119,6 +111,18 @@ class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRe
 
     override fun onCameraClosed(cameraView: CameraView) {
         Log.e(TAG, "onCameraClosed")
+    }
+
+    override fun onStartCompress() {
+        Log.e(TAG, "onStartCompress")
+    }
+
+    override fun onCompressFail() {
+        Log.e(TAG, "onCompressFail")
+    }
+
+    override fun onCompressSuccess(action: Int,localPath:String, compressPath: String) {
+        Log.e(TAG, "onCompressSuccess: localPath:$localPath    compressPath:$compressPath" )
     }
 
 }

@@ -28,7 +28,7 @@
         android:id="@+id/btnChooice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Chooice" />
+        android:text="Choice Camera" />
     <Button
         android:id="@+id/btnPicture"
         android:layout_width="wrap_content"
@@ -44,7 +44,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="50dp"
-        android:text="start" />
+        android:text="video_start" />
 
     <Button
         android:id="@+id/btnStop"
@@ -53,6 +53,6 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_marginBottom="50dp"
-        android:text="stop" />
+        android:text="video_stop" />
 
 </RelativeLayout>

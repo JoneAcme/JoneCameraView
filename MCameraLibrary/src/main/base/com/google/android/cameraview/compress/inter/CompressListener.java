@@ -14,5 +14,5 @@ public interface CompressListener {
 
     void onCompressFail();
 
-    void onCompressSuccess(@CameraConfig.MediaAction int action,String outPath);
+    void onCompressSuccess(@CameraConfig.MediaAction int action,String localPath,String compressPath);
 }

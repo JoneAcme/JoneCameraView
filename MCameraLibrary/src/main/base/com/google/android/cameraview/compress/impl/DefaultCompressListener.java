@@ -25,7 +25,7 @@ public class DefaultCompressListener implements CompressListener {
     }
 
     @Override
-    public void onCompressSuccess(int action, String outPath) {
-        Log.e(TAG, "onCompressSuccess:" + outPath);
+    public void onCompressSuccess(int action, String outPath, String compressPath) {
+        Log.e(TAG, "onCompressSuccess:localPath" + outPath +"  compressPath:"+compressPath);
     }
 }

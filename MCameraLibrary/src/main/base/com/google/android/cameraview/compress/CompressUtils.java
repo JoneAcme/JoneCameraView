@@ -41,12 +41,12 @@ public class CompressUtils {
                 mCameraOption.getCompressListener().onCompressFail();
             return;
         }
-
+        final String path = FileUtils.getLocalPath(mContext);
 
         Observable.create(new ObservableOnSubscribe<String>() {
             @Override
             public void subscribe(ObservableEmitter<String> e) throws Exception {
-                final String path = FileUtils.getLocalPath(mContext);
+
                 String cachePath = FileUtils.getPictureCacheDirPath(mContext);
 
                 Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length - 1);
@@ -79,8 +79,8 @@ public class CompressUtils {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                            if(null != mCameraOption.getCompressListener())
-                                mCameraOption.getCompressListener().onStartCompress();
+                                if (null != mCameraOption.getCompressListener())
+                                    mCameraOption.getCompressListener().onStartCompress();
                             }
                         });
                     }
@@ -88,7 +88,7 @@ public class CompressUtils {
                     @Override
                     public void onNext(String s) {
                         if (mCameraOption.getCompressListener() != null)
-                            mCameraOption.getCompressListener().onCompressSuccess(CameraConfig.MEDIA_ACTION_PHOTO, s);
+                            mCameraOption.getCompressListener().onCompressSuccess(CameraConfig.MEDIA_ACTION_PHOTO, path, s);
                     }
 
                     @Override
@@ -164,7 +164,7 @@ public class CompressUtils {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                if(null != mCameraOption.getCompressListener())
+                                if (null != mCameraOption.getCompressListener())
                                     mCameraOption.getCompressListener().onStartCompress();
                             }
                         });
@@ -173,7 +173,7 @@ public class CompressUtils {
                     @Override
                     public void onNext(String s) {
                         if (mCameraOption.getCompressListener() != null)
-                            mCameraOption.getCompressListener().onCompressSuccess(CameraConfig.MEDIA_ACTION_VIDEO, s);
+                            mCameraOption.getCompressListener().onCompressSuccess(CameraConfig.MEDIA_ACTION_VIDEO, localPath, s);
                     }
 
                     @Override
