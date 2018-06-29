@@ -1,6 +1,6 @@
 # JoneCameraView
 
-##自定义Camera
+## 自定义Camera
     参考 [https://github.com/hujiaweibujidao/CameraView](https://github.com/hujiaweibujidao/CameraView)
     对该项目的二次开发，
     添加 拍照、录像功能，
@@ -16,7 +16,7 @@ CameraVideoRecorderListener |  监听录像开始、结束的接口 |  mCameraVi
 ## 其他参数
 
 ### CameraViewOptions
-    包含是否开启压缩，图片压缩接口，视频压缩接口，压缩进度接口。可自行实现接口。
+包含是否开启压缩，图片压缩接口，视频压缩接口，压缩进度接口。可自行实现接口。
 
     默认实现：
          图片压缩质量取值为 CameraViewOptions 的quality
