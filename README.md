@@ -40,15 +40,15 @@ CameraVideoRecorderListener |  监听录像开始、结束的接口 |  mCameraVi
     onCompressSuccess(@CameraConfig.MediaAction int action,String localPath,String compressPath)
 
     param | description
-      ---- | ---
-      action | 拍照/录像 状态区分
-      localPath | 未经压缩处理过的本地地址
-      compressPath | 压缩后的地址
+    ---- | ---
+    action  |  拍照/录像 状态区分
+    localPath  |  未经压缩处理过的本地地址
+    compressPath  |  压缩后的地址
 
 
     action 的取值:
 
-      action | description
-      ---- | ---
-      CameraConfig.MEDIA_ACTION_VIDEO | 录像返回
-      CameraConfig.MEDIA_ACTION_PHOTO | 拍照返回
+    action | description
+    ---- | ---
+    CameraConfig.MEDIA_ACTION_VIDEO  |  录像返回
+    CameraConfig.MEDIA_ACTION_PHOTO  |  拍照返回
