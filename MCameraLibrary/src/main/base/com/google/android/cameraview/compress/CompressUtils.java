@@ -3,6 +3,7 @@ package com.google.android.cameraview.compress;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,8 +36,8 @@ public class CompressUtils {
     private static final Handler mHandler = new Handler(Looper.getMainLooper());
 
 
-    public static void ansyPictrueCompress(final Context mContext, final byte[] data, final CameraViewOptions mCameraOption) {
-        if (mContext == null || mCameraOption == null || data == null) {
+    public static void ansyPictrueCompress(final Context mContext, final Bitmap bitmap, final CameraViewOptions mCameraOption) {
+        if (mContext == null || mCameraOption == null || bitmap == null) {
             if (null != mCameraOption && null != mCameraOption.getCompressListener())
                 mCameraOption.getCompressListener().onCompressFail();
             return;
@@ -49,7 +50,6 @@ public class CompressUtils {
 
                 String cachePath = FileUtils.getPictureCacheDirPath(mContext);
 
-                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length - 1);
                 //原图存储
                 boolean normal = saveBitmap(bitmap, path, 100);
                 if (mCameraOption.isCompress() && mCameraOption.getPictureCompress() != null) {
@@ -111,9 +111,12 @@ public class CompressUtils {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, bos);
             fos.write(bos.toByteArray());
+
             Log.d(TAG, "saveBitmap:" + outPath + "  size:" + FileUtils.getFileSize(outPath));
+            Log.d(TAG, "saveBitmap:" + outPath + "  rotation:" + new ExifInterface(outPath).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED));
             return true;
         } catch (Exception e) {
+            Log.e(TAG, "saveBitmap ERROR!!:" + e.getMessage());
             e.printStackTrace();
             return false;
         }

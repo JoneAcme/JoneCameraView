@@ -94,8 +94,8 @@ class Camera2Manager extends CameraManager {
 
     private ImageReader mImageReader;
 
-    public Camera2Manager(CameraManagerCallBack callback, CameraPreview preview, Context context) {
-        super(callback, preview,context);
+    public Camera2Manager(CameraManagerCallBack callback, CameraPreview preview, Context context,CameraViewOptions options) {
+        super(callback, preview,context,options);
         mCameraManager = (android.hardware.camera2.CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         if (mPreview != null) {
             mPreview.setCallback(new CameraPreview.Callback() {

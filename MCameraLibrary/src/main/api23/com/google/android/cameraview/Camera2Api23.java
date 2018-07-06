@@ -31,8 +31,8 @@ import com.google.android.cameraview.model.Size;
 @TargetApi(23)
 class Camera2Api23 extends Camera2Manager {
 
-    Camera2Api23(CameraManagerCallBack callback, CameraPreview preview, Context context) {
-        super(callback, preview, context);
+    Camera2Api23(CameraManagerCallBack callback, CameraPreview preview, Context context,CameraViewOptions options) {
+        super(callback, preview, context,options);
     }
 
     @Override

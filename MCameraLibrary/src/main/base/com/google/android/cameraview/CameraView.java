@@ -58,6 +58,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
     public static final int FACING_FRONT = CameraConfig.FACING_FRONT;
 
 
+    private CameraViewOptions options ;
     @IntDef({FACING_BACK, FACING_FRONT})
     @Retention(RetentionPolicy.SOURCE)
     public @interface Facing {
@@ -100,10 +101,10 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
             mDisplayOrientationDetector = null;
             return;
         }
-
+        options = new CameraViewOptions.Builder(context).create();
         // Internal setup
         mPreviewImpl = createPreviewImpl(context);
-        mCameraManager = createCameraViewImpl(context, mPreviewImpl);
+        mCameraManager = createCameraViewImpl(context, mPreviewImpl,options);
 
         // Attributes R.style.Widget_CameraView中是参数默认值
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView, defStyleAttr, R.style.Widget_CameraView);
@@ -158,24 +159,23 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
         }
     }
 
-    private CameraManager createCameraViewImpl(Context context, CameraPreview preview) {
-        return new Camera1Manager(this, preview, context);
+    private CameraManager createCameraViewImpl(Context context, CameraPreview preview,CameraViewOptions cameraViewOptions) {
 
-//        if (CameraHelper.getInstance(getContext()).shouldUseCamera1()) {//只使用Camera1的方案
-//            CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager (for previous experience)", Build.VERSION.SDK_INT);
-//            return new Camera1Manager(this, preview, context);
-//        } else {//根据版本可能使用Camera2的方案
-//            if (Build.VERSION.SDK_INT < 21) {
-//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager", Build.VERSION.SDK_INT);
-//                return new Camera1Manager(this, preview, context);
-//            } else if (Build.VERSION.SDK_INT < 23) {
-//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Manager", Build.VERSION.SDK_INT);
-//                return new Camera2Manager(this, preview, context);
-//            } else {
-//                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Api23", Build.VERSION.SDK_INT);
-//                return new Camera2Api23(this, preview, context);
-//            }
-//        }
+        if (CameraHelper.getInstance(getContext()).shouldUseCamera1()) {//只使用Camera1的方案
+            CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager (for previous experience)", Build.VERSION.SDK_INT);
+            return new Camera1Manager(this, preview, context,cameraViewOptions);
+        } else {//根据版本可能使用Camera2的方案
+            if (Build.VERSION.SDK_INT < 21) {
+                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager", Build.VERSION.SDK_INT);
+                return new Camera1Manager(this, preview, context,cameraViewOptions);
+            } else if (Build.VERSION.SDK_INT < 23) {
+                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Manager", Build.VERSION.SDK_INT);
+                return new Camera2Manager(this, preview, context,cameraViewOptions);
+            } else {
+                CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera2Api23", Build.VERSION.SDK_INT);
+                return new Camera2Api23(this, preview, context,cameraViewOptions);
+            }
+        }
     }
 
     @Override
@@ -272,7 +272,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
             if (mPreviewImpl == null || mPreviewImpl.getView() == null) {//可以避免重复创建，只是替换CameraView，不用替换PreviewImpl的实现，预览组件的大小也维持之前的设置 (aspect ratio没变)
                 mPreviewImpl = createPreviewImpl(getContext());
             }
-            mCameraManager = new Camera1Manager(this, mPreviewImpl, getContext());
+            mCameraManager = new Camera1Manager(this, mPreviewImpl, getContext(),options);
             onRestoreInstanceState(state);
             isSuccess = mCameraManager.startCamera();
             if (isSuccess) {
@@ -294,9 +294,14 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
     }
 
 
-    public void releaseCamera() {
-        stopCamera();
-        mCameraManager.releaseCameraManager();
+    public void stopAndReleaseCamera() {
+        try {
+            stopCamera();
+            mCameraManager.releaseCameraManager();
+        } catch (Exception e) {
+            CameraLog.e(TAG, "stopCamera error:"+e.getMessage());
+        }
+
     }
 
     /**
@@ -509,6 +514,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
      * @param mCameraOption
      */
     public void setCameraOption(CameraViewOptions mCameraOption) {
+        this.options = mCameraOption;
         mCameraManager.setCameraOption(mCameraOption);
     }
 }

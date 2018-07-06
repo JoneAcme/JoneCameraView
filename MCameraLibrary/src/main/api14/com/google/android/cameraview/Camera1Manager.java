@@ -19,6 +19,9 @@ package com.google.android.cameraview;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -33,9 +36,11 @@ import android.view.SurfaceHolder;
 import android.view.View;
 
 import com.google.android.cameraview.callback.CameraManagerCallBack;
+import com.google.android.cameraview.compress.CompressUtils;
 import com.google.android.cameraview.configs.CameraConfig;
 import com.google.android.cameraview.configs.CameraViewOptions;
 import com.google.android.cameraview.helper.CameraUtils;
+import com.google.android.cameraview.helper.Exif;
 import com.google.android.cameraview.helper.FileUtils;
 import com.google.android.cameraview.logs.CameraLog;
 import com.google.android.cameraview.model.AspectRatio;
@@ -90,8 +95,8 @@ class Camera1Manager extends CameraManager {
     private Handler mHandler = new Handler();
     private Camera.AutoFocusCallback mAutofocusCallback;//这个貌似并没有起到作用，后期考虑删除
 
-    public Camera1Manager(CameraManagerCallBack callback, CameraPreview preview, Context context) {
-        super(callback, preview, context);
+    public Camera1Manager(CameraManagerCallBack callback, CameraPreview preview, Context context,CameraViewOptions options) {
+        super(callback, preview, context,options);
         if (mPreview != null) {
             mPreview.setCallback(new CameraPreview.Callback() {
                 @Override
@@ -317,16 +322,14 @@ class Camera1Manager extends CameraManager {
                 public void onPictureTaken(byte[] data, Camera camera) {
                     CameraLog.i(TAG, "takePictureInternal, onPictureTaken");
                     isPictureCaptureInProgress.set(false);
-
-//                    mCallback.onPictureTaken(data);
                     compressImage(data, mCameraOption);
-
                     camera.cancelAutoFocus();
                     camera.startPreview();
                 }
             });
         }
     }
+
 
     @Override
     public void setDisplayOrientation(int displayOrientation) {
@@ -781,11 +784,11 @@ class Camera1Manager extends CameraManager {
             //设置所录制的声音的编码格式。    MediaRecorder.AudioEncoder.AMR_NB
             mMediaRecorder.setAudioEncoder(mCamcorderProfile.audioCodec);
 
-            videoPath =  FileUtils.getVideoLocalPath(mContext);
+            videoPath = FileUtils.getVideoLocalPath(mContext);
             mMediaRecorder.setOutputFile(videoPath);
             int oritation = CameraUtils.calcDisplayOrientation(mCameraInfo, mDisplayOrientation);
             //设置输出的视频播放的方向提示
-            mMediaRecorder.setOrientationHint(mFacing == CameraConfig.FACING_FRONT ?(oritation+180)%360:oritation);
+            mMediaRecorder.setOrientationHint(mFacing == CameraConfig.FACING_FRONT ? (oritation + 180) % 360 : oritation);
             mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
 
             mMediaRecorder.prepare();
@@ -834,7 +837,7 @@ class Camera1Manager extends CameraManager {
 
                     mCallback.onCompleteVideoRecorder();
                     Log.d(TAG, "mMediaRecorder stopCamera!");
-                    compressVideo(videoPath,mCameraOption);
+                    compressVideo(videoPath, mCameraOption);
                 }
             });
         }

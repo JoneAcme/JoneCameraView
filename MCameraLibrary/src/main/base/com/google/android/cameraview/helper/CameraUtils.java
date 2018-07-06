@@ -2,6 +2,9 @@ package com.google.android.cameraview.helper;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.os.Build;
@@ -11,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.cameraview.configs.CameraConfig;
+import com.google.android.cameraview.logs.CameraLog;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -177,4 +181,40 @@ public class CameraUtils {
     public static boolean isLandscape(int orientationDegrees) {
         return (orientationDegrees == CameraConfig.LANDSCAPE_90 || orientationDegrees == CameraConfig.LANDSCAPE_270);
     }
+
+
+    public static Bitmap rotationBitmap(byte[] data) {
+        Bitmap bitmapPicture;
+        int orientation = Exif.getOrientation(data);
+        CameraLog.i(TAG, "takePictureInternal, orientation::::::"+orientation);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        switch (orientation) {
+            case 90:
+                bitmapPicture = rotateImage(bitmap, 90);
+
+                break;
+            case 180:
+                bitmapPicture = rotateImage(bitmap, 180);
+
+                break;
+            case 270:
+                bitmapPicture = rotateImage(bitmap, 270);
+
+                break;
+
+            default:
+                bitmapPicture = bitmap;
+                break;
+        }
+        return bitmapPicture;
+    }
+
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix,
+                true);
+    }
+
 }

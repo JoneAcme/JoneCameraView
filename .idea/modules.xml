@@ -3,8 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/JoneCameraView.iml" filepath="$PROJECT_DIR$/JoneCameraView.iml" />
-      <module fileurl="file://$PROJECT_DIR$/MCameraLibrary/library.iml" filepath="$PROJECT_DIR$/MCameraLibrary/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MCameraLibrary/MCameraLibrary.iml" filepath="$PROJECT_DIR$/MCameraLibrary/MCameraLibrary.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://D:\AndroidWorkSpace\JoneCameraView\MCameraLibrary\library.iml" filepath="D:\AndroidWorkSpace\JoneCameraView\MCameraLibrary\library.iml" />
     </modules>
   </component>
 </project>

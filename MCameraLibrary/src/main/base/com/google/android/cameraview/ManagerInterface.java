@@ -1,5 +1,6 @@
 package com.google.android.cameraview;
 
+import android.graphics.Bitmap;
 import android.view.View;
 
 import com.google.android.cameraview.configs.CameraViewOptions;
@@ -66,5 +67,5 @@ public interface ManagerInterface {
 
     void compressVideo(String localPath,CameraViewOptions mCameraOption);
 
-    void compressImage( byte[] data,CameraViewOptions mCameraOption);
+    void compressImage(byte[] data, CameraViewOptions mCameraOption);
 }
