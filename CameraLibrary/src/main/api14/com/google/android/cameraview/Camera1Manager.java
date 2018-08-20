@@ -95,8 +95,8 @@ class Camera1Manager extends CameraManager {
     private Handler mHandler = new Handler();
     private Camera.AutoFocusCallback mAutofocusCallback;//这个貌似并没有起到作用，后期考虑删除
 
-    public Camera1Manager(CameraManagerCallBack callback, CameraPreview preview, Context context,CameraViewOptions options) {
-        super(callback, preview, context,options);
+    public Camera1Manager(CameraManagerCallBack callback, CameraPreview preview, Context context, CameraViewOptions options) {
+        super(callback, preview, context, options);
         if (mPreview != null) {
             mPreview.setCallback(new CameraPreview.Callback() {
                 @Override
@@ -811,6 +811,12 @@ class Camera1Manager extends CameraManager {
             @Override
             public void run() {
                 if (prepareVideoRecorder()) {
+//                    mBackgroundHandler.postDelayed(new Runnable() {
+//                        @Override
+//                        public void run() {
+//
+//                        }
+//                    }, 500);
                     mMediaRecorder.start();
                     Log.e(TAG, "mMediaRecorder startCamera!");
                     mIsVideoRecording = true;

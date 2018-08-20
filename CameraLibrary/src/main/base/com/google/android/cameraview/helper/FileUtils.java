@@ -2,11 +2,11 @@ package com.google.android.cameraview.helper;
 
 import android.content.Context;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.cameraview.configs.CameraConfig;
-import com.google.android.cameraview.configs.CameraViewOptions;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,15 +26,17 @@ public class FileUtils {
     private static final String VideoCacheFileName = "/video";
     private static final String PictureCacheFileName = "/picture";
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-    private  static final String DIRECTORY_NAME = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/Camera";
+    private static final String DIRECTORY_NAME = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/Camera";
 
 
     public static String getLocalPath(Context mContext) {
         return getOutputMediaFile(mContext, CameraConfig.MEDIA_ACTION_PHOTO, DIRECTORY_NAME, null).getAbsolutePath();
     }
+
     public static String getVideoLocalPath(Context mContext) {
         return getOutputMediaFile(mContext, CameraConfig.MEDIA_ACTION_VIDEO, DIRECTORY_NAME, null).getAbsolutePath();
     }
+
     public static String getVideoCacheDirPath(Context mContext) {
         return getOutputMediaFile(mContext, CameraConfig.MEDIA_ACTION_VIDEO, mContext.getCacheDir() + VideoCacheFileName, null).getAbsolutePath();
     }
@@ -44,10 +46,8 @@ public class FileUtils {
     }
 
 
-
-
     public static File getOutputMediaFile(Context context, @CameraConfig.MediaAction int mediaAction, @Nullable String pathToDirectory, @Nullable String fileName) {
-        final File mediaStorageDir = generateStorageDir(context, pathToDirectory);
+        final File mediaStorageDir = generateStoragePicDir(context, pathToDirectory);
         File mediaFile = null;
 
         if (mediaStorageDir != null) {
@@ -70,7 +70,7 @@ public class FileUtils {
         return mediaFile;
     }
 
-    public static File generateStorageDir(Context context, @Nullable String pathToDirectory) {
+    public static File generateStoragePicDir(Context context, @Nullable String pathToDirectory) {
         File mediaStorageDir = null;
         if (pathToDirectory != null) {
             mediaStorageDir = new File(pathToDirectory);
@@ -126,6 +126,44 @@ public class FileUtils {
 
     public static void deleteFile(String filePath) {
         File file = new File(filePath);
-        if(file.exists()) file.deleteOnExit();
+        if (file.exists()) file.deleteOnExit();
+    }
+
+    public static File mkdirs(String path) {
+        if (null == path || path.isEmpty())
+            return new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+        File file = new File(path);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return file;
+    }
+
+    public static String mkdirsPath(String path) {
+        if (null == path)
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            return file.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
+        }
+    }
+
+    /**
+     * @param url
+     * @return 从下载连接中解析出文件名
+     */
+    @NonNull
+    public static String getNameFromUrl(String url) {
+        return url.substring(url.lastIndexOf("/") + 1);
+    }
+
+    public static String getCacheDir(Context mContext) {
+        return mContext.getCacheDir().getAbsolutePath();
     }
 }

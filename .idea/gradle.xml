@@ -8,7 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/MCameraLibrary" />
+            <option value="$PROJECT_DIR$/CameraLibrary" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
