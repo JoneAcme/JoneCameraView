@@ -18,4 +18,7 @@ public interface CameraManagerCallBack {
 
 //    void onCompleteVideoRecorder(String outPath);
     void onCompleteVideoRecorder();
+
+    void onCancelVideoRecorder();
+
 }

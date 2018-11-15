@@ -848,7 +848,26 @@ class Camera1Manager extends CameraManager {
             });
         }
     }
+    @Override
+    public void cancelVideoRecorder() {
+        if (mIsVideoRecording) {
+            mBackgroundHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (mMediaRecorder != null) mMediaRecorder.stop();
+                    } catch (Exception ignore) {
+                        Log.e(TAG, "mMediaRecorder stopCamera error:" + ignore);
+                    }
 
+                    mIsVideoRecording = false;
+                    releaseVideoRecorder();
+
+                    mCallback.onCancelVideoRecorder();
+                }
+            });
+        }
+    }
     @Override
     public void releaseVideoRecorder() {
         super.releaseVideoRecorder();

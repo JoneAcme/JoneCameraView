@@ -51,6 +51,8 @@ public interface ManagerInterface {
 
     void stopVideoRecorder();
 
+    void cancelVideoRecorder();
+
     void releaseVideoRecorder();
 
     void detachFocusTapListener();

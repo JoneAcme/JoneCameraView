@@ -122,4 +122,7 @@ class CameraActivity : AppCompatActivity(), CameraControlListener, CameraVideoRe
         Log.e(TAG, "onCompressSuccess: localPath:$localPath    compressPath:$compressPath" )
     }
 
+    override fun onCancelVideoRecorder() {
+        Log.e(TAG, "onCancelVideoRecorder")
+    }
 }

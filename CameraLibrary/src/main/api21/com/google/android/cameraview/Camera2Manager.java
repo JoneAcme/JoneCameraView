@@ -1113,4 +1113,20 @@ class Camera2Manager extends CameraManager {
             compressVideo(videoPath,mCameraOption);
         }
     }
+
+    @Override
+    public void cancelVideoRecorder() {
+        if (mIsVideoRecording) {
+            closePreviewSession();
+            if (mMediaRecorder != null) {
+                try {
+                    mMediaRecorder.stop();
+                } catch (Exception ignore) {
+                }
+            }
+            mIsVideoRecording = false;
+            releaseVideoRecorder();
+            mCallback.onCancelVideoRecorder();
+        }
+    }
 }

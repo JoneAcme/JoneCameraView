@@ -159,7 +159,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
         }
     }
 
-    private CameraManager createCameraViewImpl(Context context, CameraPreview preview,CameraViewOptions cameraViewOptions) {
+    private CameraManager createCameraViewImpl(Context context, CameraPreview preview, CameraViewOptions cameraViewOptions) {
 
         if (CameraHelper.getInstance(getContext()).shouldUseCamera1()) {//只使用Camera1的方案
             CameraLog.i(TAG, "createCameraViewImpl, sdk version = %d, create Camera1Manager (for previous experience)", Build.VERSION.SDK_INT);
@@ -419,7 +419,7 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
             out.writeInt(flash);
         }
 
-        public static final Parcelable.Creator<CameraViewSavedState> CREATOR = ParcelableCompat.newCreator(new ParcelableCompatCreatorCallbacks<CameraViewSavedState>() {
+        public static final Creator<CameraViewSavedState> CREATOR = ParcelableCompat.newCreator(new ParcelableCompatCreatorCallbacks<CameraViewSavedState>() {
 
             @Override
             public CameraViewSavedState createFromParcel(Parcel in, ClassLoader loader) {
@@ -491,6 +491,11 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
         if (null != mRecorderListener) mRecorderListener.onCompleteVideoRecorder();
     }
 
+    @Override
+    public void onCancelVideoRecorder() {
+        if (null != mRecorderListener) mRecorderListener.onCancelVideoRecorder();
+    }
+
     public void setControlListener(CameraControlListener mControlListener) {
         this.mControlListener = mControlListener;
     }
@@ -505,6 +510,9 @@ public class CameraView extends FrameLayout implements CameraManagerCallBack {
 
     public void stopVideoRecorder() {
         mCameraManager.stopVideoRecorder();
+    }
+    public void cancelVideoRecorder() {
+        mCameraManager.cancelVideoRecorder();
     }
 
 

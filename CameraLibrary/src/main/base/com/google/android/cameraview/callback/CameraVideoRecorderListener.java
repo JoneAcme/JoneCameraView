@@ -12,4 +12,6 @@ public interface CameraVideoRecorderListener {
 
 //    void onCompleteVideoRecorder(String outPath);
     void onCompleteVideoRecorder();
+
+    void onCancelVideoRecorder();
 }
